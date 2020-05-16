@@ -3,6 +3,8 @@ const superagent = require('superagent');
 const tools = require('./tools');
 const cheerio = require('cheerio');
 const config = require('./config');
+const fs = require('fs');
+const path = require('path');
 const analysisCsrfToken = tools.analysisCsrfToken;
 
 const browserMsg = {
@@ -105,13 +107,29 @@ const getMediaHLSUrl = (headers, url) => {
     .set(headers)
     .then((res) => {
       console.log('getMediaHLSUrl');
-      // let $ = cheerio.load(res.text);
-      console.log(res);
+      let mediaUrl = res.body.mediaHLSUri;
       csrfToken = analysisCsrfToken(res);
+      let fileName = mediaUrl.match(/\.com\/(\S*)\?pm/)[1];
+      getMedia(mediaUrl, fileName);
     })
     .catch(err => {
       console.log(err);
     })
+}
+
+const getMedia = (url, fileName) => {
+  let headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36",
+    Referer: 'http://www.codingke.com/study/v/11096-lesson'
+  };
+  let stream = fs.createWriteStream(path.resolve(__dirname, fileName));
+  superagent
+    .get(url)
+    .pipe(stream)
+}
+
+const downLoadFile = () => {
+
 }
 
 module.exports = reptileFn;

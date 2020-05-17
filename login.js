@@ -94,14 +94,14 @@ const lesson = (headers) => {
       let lessonId = $('#lessonId').val();
       csrfToken = analysisCsrfToken(res);
       let mediaUrl = `/study/${courseId}/lesson/${lessonId}?token=${csrfToken}c`;
-      getMediaHLSUrl(headers, mediaUrl, headers.Cookie);
+      getMediaHLSUrl(headers, mediaUrl, lessonId);
     })
     .catch(err => {
       console.log(err);
     })
 }
 
-const getMediaHLSUrl = (headers, url) => {
+const getMediaHLSUrl = (headers, url, lessonId) => {
   superagent
     .get(config.baseUrl + url)
     .set(headers)
@@ -110,19 +110,22 @@ const getMediaHLSUrl = (headers, url) => {
       let mediaUrl = res.body.mediaHLSUri;
       csrfToken = analysisCsrfToken(res);
       let fileName = mediaUrl.match(/\.com\/(\S*)\?pm/)[1];
-      getMedia(mediaUrl, fileName);
+      getMedia(mediaUrl, fileName, lessonId);
     })
     .catch(err => {
       console.log(err);
     })
 }
 
-const getMedia = (url, fileName) => {
+const getMedia = (url, fileName, lessonId) => {
   let headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36",
     Referer: 'http://www.codingke.com/study/v/11096-lesson'
   };
-  let stream = fs.createWriteStream(path.resolve(__dirname, fileName));
+  fs.mkdir(path.resolve(__dirname, lessonId), err => {
+    if (err) throw err;
+  });
+  let stream = fs.createWriteStream(path.resolve(__dirname, lessonId, fileName));
   superagent
     .get(url)
     .pipe(stream)

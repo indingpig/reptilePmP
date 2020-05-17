@@ -6,7 +6,8 @@ const config = require('./config');
 const fs = require('fs');
 const path = require('path');
 const analysisCsrfToken = tools.analysisCsrfToken;
-
+const anlysisM3u8 = tools.anlysisM3u8;
+const downLoadFile = tools.downLoadFile;
 const browserMsg = {
   "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36",
   "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
@@ -118,21 +119,33 @@ const getMediaHLSUrl = (headers, url, lessonId) => {
 }
 
 const getMedia = (url, fileName, lessonId) => {
-  let headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36",
-    Referer: 'http://www.codingke.com/study/v/11096-lesson'
-  };
-  fs.mkdir(path.resolve(__dirname, lessonId), err => {
-    if (err) throw err;
-  });
-  let stream = fs.createWriteStream(path.resolve(__dirname, lessonId, fileName));
+  let dir = path.resolve(__dirname, lessonId);
+  // 判断文件夹是否存在
+  if (!fs.existsSync(dir)) {
+    fs.mkdir(dir, err => {
+      if (err) throw err;
+    });
+  }
+  let filePath = path.resolve(__dirname, lessonId, fileName)
+  let stream = fs.createWriteStream(filePath);
   superagent
     .get(url)
-    .pipe(stream)
+    .pipe(stream);
+  stream.on('finish', () => {
+    console.log('=======================================写入完成=========================================');
+    anlysisM3u8(filePath, dir).then(downloadUrlList => {
+      // console.log(downloadUrlList);
+      downloadUrlList.forEach((item, i) => {
+        console.log(item);
+        setTimeout(() => {
+          downLoadFile(item, lessonId);
+        }, i * 2000)
+      })
+    }).catch(err => {
+      console.log(err);
+    });
+  })
 }
 
-const downLoadFile = () => {
-
-}
 
 module.exports = reptileFn;
